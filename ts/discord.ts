@@ -79,8 +79,9 @@ function assignIssue(content, channel, message) {
    
    response.then((value: any) => {
       if (value.error) return err(value.error, channel)
-         // sends an embed for the issue 
-      channel.send(Embedder.createSingleIssueFromOneData(value, (Data.projectData)[index].name, value.iid))
+      
+      channel.send("Issue assigned:")
+      channel.send(Embedder.describeIssueFromData(value, (Data.projectData)[index].name, value.iid))
       
    }, (error) => {
       return err(`Error: ${error.body}`, channel)
@@ -115,7 +116,7 @@ function closeIssue(content, channel, message) {
       if (value.error) return err(value.error, channel)
 
       channel.send("Issue successfully closed:")
-      channel.send(Embedder.createSingleIssueFromOneData(value, (Data.projectData)[index].name, value.iid))
+      channel.send(Embedder.describeIssueFromData(value, (Data.projectData)[index].name, value.iid))
       
    }, (error) => {
       return err(`Error: ${error.body}`, channel)
@@ -159,8 +160,8 @@ function createIssue(content, channel, message) {
    response.then((value: any) => {
       if (value.error) return err(value.error, channel)
 
-      channel.send("Issue created");
-      channel.send(Embedder.createSingleIssueFromOneData(value, (Data.projectData)[index].name, value.iid))
+      channel.send("Issue created:");
+      channel.send(Embedder.describeIssueFromData(value, (Data.projectData)[index].name, value.iid))
 
    }, (error) => {
       return err(`Error: ${error.body}`, channel)
@@ -204,7 +205,8 @@ function describeIssues(content: string[], channel: Discord.TextChannel) {
    Requester.getIssues(projectUrl).then((value) => {
       if (value.error) return err(value.error, channel)
 
-      let issueEmbed = Embedder.createSingleProject(JSON.parse(value.body), Data.projectData[index], value.headers[value.headers.indexOf('X-Total') + 1]);
+      let issueEmbed = Embedder.createSingleProject(JSON.parse(value.body), Data.projectData[index]);
+      // value.headers[value.headers.indexOf('X-Total') + 1] is the total # of projs
 
       channel.send(issueEmbed)
 
@@ -234,7 +236,7 @@ function describeIssue(content: string[], channel: Discord.TextChannel) {
    Requester.getIssues(url).then((value) => {
       if (value.error) return err(value.error, channel)
 
-      let issueEmbed = Embedder.createSingleIssueFromAllData(JSON.parse(value.body), projName, issue);
+      let issueEmbed = Embedder.describeIssueFromAllData(JSON.parse(value.body), projName, issue);
 
       channel.send(issueEmbed)
 
