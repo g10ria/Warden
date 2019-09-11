@@ -4,20 +4,19 @@ import config from './config';
 // includes project title, description, lead, and 5 project issues from page <n> 
 // <n> is determined by user input
 function createSingleProject(issueData, projectData, totalProjects) {
-    var workers = " This project is lead by " + projectData.lead + " and worked on by "+projectData.members + ".";
-    var count = issueData[0].iid
+    let countIndex = 0;
 
-    var embedJSON = {
+   let embedJSON = {
         "embed" : {
-            "title" : "Issues " + (count-issueData.length+1).toString() + "-"+count+ " of "+totalProjects,
-            "description" : projectData.description + workers + "Note that issue numbers are issue IDs, and are not always consecutive",
+            "title" : `Last ${issueData.length} open issues:`,
+            "description": "Note that the issue number is actually their ID, and issue numbers are not necessarily sequential.",
             "color" : config.embedColor,
             "thumbnail": {
               "url": "https://cdn.discordapp.com/embed/avatars/0.png"
             },
             "author" : {
                 "name" : projectData.name,
-                "url" : "https://gitlab.dev.harker.org/harkerdev/" + projectData.shortname,
+                "url" : config.standardURL + projectData.shortname,
             },
             "fields" : []
         }
@@ -25,16 +24,18 @@ function createSingleProject(issueData, projectData, totalProjects) {
 
     if (issueData.length==0) return embedJSON
     
-    for (var key in issueData) {
+   for (let key in issueData) {
         if (issueData.hasOwnProperty(key)) {
             embedJSON.embed.fields.push(
                 {
-                    "name" : "Issue " + count + ": " + issueData[key].title,
-                    "value" : (issueData[key].description== "" || issueData[key].description == undefined) ? "[no description]" : issueData[key].description
+                  "name": `Issue ${issueData[key].iid}: ${issueData[key].title}`,
+                    "value" : (issueData[key].description== "" || issueData[key].description == undefined) ? "..." : issueData[key].description
                 }
             )
-            count--;
         }
+      //   countIndex++;
+      //   console.log(countIndex)
+      // count = issueData[countIndex].iid
     }
 
     return embedJSON

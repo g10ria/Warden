@@ -44,7 +44,7 @@ function processCreateIssue(message : string, data) {
 
 // gets one's gitlab id from their discord tag
 // @param value the discord tag (in the form <@12345678912345342>)
-function getGitlabIDfromDiscordID(value, data) {
+function getGitlabIDfromDiscordID(value, data) : string {
 
     // if the discord ID is invalid returns -1
     if (value.length<=3) return (-1).toString();
