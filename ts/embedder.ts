@@ -131,56 +131,11 @@ function createSingleIssueFromOneData(data, projectName : string, issueNumber : 
     return embedJSON
 }
 
-// creates an embed for all HarkerDev projects, using information from the projectInfo csv
-// @param projectData all project data as stored in the csv
-function createAllProjects(projectData) {
-    // sorting the list of projects according to their status, and then alphabetically
-    projectData.sort(function(a,b) {
-        if (parseInt(a.status)!=parseInt(b.status)) {
-            return parseInt(a.status) - parseInt(b.status); // least goes before
-        } else return a.name.localeCompare(b.name)
-    })
-    var embedJSON = {
-        "embed": {
-            "title" : "All Projects",
-            "description" : "",
-            "color" : config.embedColor,
-            "thumbnail" : {
-                "url" : "https://cdn.discordapp.com/embed/avatars/0.png" // hdev logo
-            },
-            "fields" : []
-        }
-    }
-
-    // counting how many projects there are of each status
-    var statuses = [0,0,0,0]
-    var statusStrings = ["active", "on hold", "complete","abandoned"]
-    for (var key in projectData) {
-        if (projectData.hasOwnProperty(key)) {
-            var projectJSON  = projectData[key]
-            embedJSON.embed.fields.push( 
-                {
-                    "name" : projectJSON.name,
-                    "value" : projectJSON.description + " Lead by "+
-                    projectJSON.lead + ". Status: " + statusStrings[projectJSON.status] + "."
-                }
-            )
-            statuses[projectJSON.status] += 1;
-        }
-    }
-    var projectStatuses = statuses[0] + " active, "+
-                          statuses[1] + " on hold, "+
-                          statuses[2] + " complete/being maintained, "+
-                          statuses[3] + " abandoned."
-    embedJSON.embed.description = projectStatuses;
-    return embedJSON;
-}
-
 // creates a help function for describing each function
 function createHelp() {
     return {
         "embed": {
-          "description": "Warden lets you get issue stuff in the channel. Note: has to be in the right channel to work",
+          "description": "Warden lets you get issue stuff in the channel. Note: has to be in the channel corresponding to the project for specific project stuff to work",
           "color": config.embedColor,
           "author": {
             "name": "WardenBot"
@@ -217,4 +172,4 @@ function parseDate(date : string) {
     return date;
 }
 
-export {createSingleProject, createSingleIssueFromAllData, createSingleIssueFromOneData, createAllProjects, createHelp}
+export {createSingleProject, createSingleIssueFromAllData, createSingleIssueFromOneData, createHelp}

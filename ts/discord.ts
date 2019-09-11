@@ -1,7 +1,5 @@
 import * as Discord from 'discord.js'
-
 import config from './config';
-
 import * as Data from './csvParser'
 import * as Requester from './requester'
 import * as Embedder from './embedder'
@@ -22,8 +20,8 @@ content: message.content in string form
 var rules = new Map();
 
 client.once('ready', () => {
+   rules.set("hi",hi);
    rules.set("help", help);
-   // rules.set("list", describeAllProjects)
    rules.set("describe", describe);
    rules.set("createissue", createIssue);
    rules.set("closeissue", closeIssue);
@@ -44,20 +42,17 @@ client.on('message', async (message) => {
    if (rules.has(command)) {     // calling command from map
       rules.get(command)(args, message.channel, message.content);
    } else {
-      message.channel.send("that command doesn't exist")
+      err("that command doesn't exist", message.channel)
    }
 });
 
 // assigns or reassigns an issue to someone
-// the message must be in the form @Warden assign issue <number> to <@user>
+// syntax is @Warden assign issue <number> to <@user>
 function assignIssue(content, channel, message) {
-   if (!(content.length == 6 && content[2] == "issue" && content[4] == "to")) return;
+   if (!(content.length == 6 && content[2] == "issue" && content[4] == "to")) return err("bad syntax", channel)
 
    let index = projectIDFromChannel(channel.id);
-   if (index == -1) {
-      channel.send("invalid channel")
-      return;
-   }
+   if (index == -1) return err("wrong channel", channel);
 
    // getting the project name from the project data
    let project : string = (Data.projectData)[index].shortname;
@@ -65,22 +60,14 @@ function assignIssue(content, channel, message) {
    // the issue number should be the 4th element in the message
    // handles invalid issue numbers (strings, etc.)
    let issue = parseInt(content[3]);
-   if (issue == NaN) {
-      channel.send("not a valid issue number")
-      return;
-   }
+   if (issue == NaN) return err("not a valid issue number", channel)
 
    // gets the gitlab id from someone's discord id
-   // content[5] should be the tag of someone (this enables assigning issues
-   // to people just by pinging them in discord)
+   // content[5] should be the tag of someone (so you can assign to someone by tagging them)
    let gitlabID : string = Processor.getGitlabIDfromDiscordID(content[5], Data);
 
-   if (gitlabID=="-1") {
-      channel.send("not a valid assignee")
-      return;
-   }
+   if (gitlabID=="-1") return err("not a valid assignee", channel);
 
-   // requesting
    let projectUrl = `${config.apiURL}${project}/issues/${issue}`;
    let response = Requester.makeRequest("PUT", projectUrl, {
       "PRIVATE-TOKEN": config.apiToken,
@@ -91,40 +78,29 @@ function assignIssue(content, channel, message) {
    });
    
    response.then((value: any) => {
-      if (value.error)
-         channel.send(value.error);
-      else {
+      if (value.error) return err(value.error, channel)
          // sends an embed for the issue 
-         channel.send(Embedder.createSingleIssueFromOneData(value, (Data.projectData)[index].name, value.iid))
-      }
+      channel.send(Embedder.createSingleIssueFromOneData(value, (Data.projectData)[index].name, value.iid))
+      
    }, (error) => {
-      channel.send("Error: " + error.body);
+      return err(`Error: ${error.body}`, channel)
    })
 
 }
 
 // closes an issue
-// the message must be in the form @Warden close issue <number>
+// syntax is @Warden close issue <number>
 function closeIssue(content, channel, message) {
-   if (content.length != 3) {
-      channel.send("bad syntax")
-      return;
-   }
+   if (content.length != 3) return err("bad syntax", channel);
 
    // getting the project
    let index = projectIDFromChannel(channel.id);
-   if (index == -1) {
-      channel.send("invalid channel")
-      return;
-   }
+   if (index == -1) return err("wrong channel", channel);
    let project: string = (Data.projectData)[index].shortname;
 
    // makes sure the issue number is valid
    let issue = parseInt(content[3]);
-   if (issue == NaN) {
-      channel.send("not a valid number")
-      return;
-   }
+   if (issue == NaN) return err("not a valid issue number", channel);
 
    // requesting
    let projectUrl = `${config.apiURL}${project}/issues/${issue}`;
@@ -136,14 +112,13 @@ function closeIssue(content, channel, message) {
       state_event: "close" // sets the state of the issue to closed
    });
    response.then((value: any) => {
-      if (value.error)
-         channel.send(value.error);
-      else {
-         channel.send("Issue successfully closed:")
-         channel.send(Embedder.createSingleIssueFromOneData(value, (Data.projectData)[index].name, value.iid))
-      }
+      if (value.error) return err(value.error, channel)
+
+      channel.send("Issue successfully closed:")
+      channel.send(Embedder.createSingleIssueFromOneData(value, (Data.projectData)[index].name, value.iid))
+      
    }, (error) => {
-      channel.send(error);
+      return err(`Error: ${error.body}`, channel)
    })
 }
 
@@ -151,15 +126,12 @@ function closeIssue(content, channel, message) {
 // syntax is @Warden createissue "title: my title" "description: my description" "assignee: @user"
 // only the title field is mandatory.
 function createIssue(content, channel, message) {
-   if (!(content.length == 4 && content[2] == "issue")) return;
+   if (!(content.length == 4 && content[2] == "issue")) return err("bad syntax", channel);
 
    // fetching the project (depends on what channel the message was sent in)
    // if the message was sent in an invalid channel, responds as such
    let index = projectIDFromChannel(channel.id);
-   if (index == -1) {
-      channel.send("invalid channel")
-      return;
-   }
+   if (index == -1) return err("wrong channel", channel);
 
    // processes fields passed in from the command message and converts them to a JSON (has to follow a certain syntax)
    let issueData = Processor.processCreateIssue(message, Data);
@@ -174,28 +146,24 @@ function createIssue(content, channel, message) {
    let issueDetails = {
       title: issueData.title, // required
       description: issueData.description,
-      assignee_ids: (issueData.assignee == undefined || issueData.assignee == -1) ? [] : parseInt(issueData.assignee),
-      due_date: issueData.duedate, // not implemented as of now
-      labels: issueData.labels // not implemented as of now
+      assignee_ids: (issueData.assignee == undefined || issueData.assignee == -1) ? [] : parseInt(issueData.assignee)
+      // due_date: issueData.duedate, 
+      // labels: issueData.labels
    };
 
-   // requesting...
    let response = Requester.makeRequest("POST", projectUrl, {
       "PRIVATE-TOKEN": config.apiToken,
       'Accept': 'application/json',
       'Content-Type': 'application/json'
    }, issueDetails);
    response.then((value: any) => {
-      if (value.error)
-         channel.send(value.error);
-      else {
+      if (value.error) return err(value.error, channel)
 
-         channel.send("Issue created");
-         channel.send(Embedder.createSingleIssueFromOneData(value, (Data.projectData)[index].name, value.iid))
+      channel.send("Issue created");
+      channel.send(Embedder.createSingleIssueFromOneData(value, (Data.projectData)[index].name, value.iid))
 
-      }
    }, (error) => {
-      channel.send(error);
+      return err(`Error: ${error.body}`, channel)
    });
 }
 
@@ -227,23 +195,21 @@ function describe(content: string[], channel: Discord.TextChannel, message: stri
 function describeIssues(content: string[], channel: Discord.TextChannel) {
 
    let index = projectIDFromChannel(channel.id);
-   if (index == -1) {
-      channel.send("invalid channel")
-      return;
-   }
+   if (index == -1) return err("wrong channel", channel);
    // getting the project name and shortname from csv data
    let projShortName: string = (Data.projectData)[index].shortname;
 
    let projectUrl = `${config.apiURL}${projShortName}/issues?state=opened&per_page=${config.issuesPerDescribe}`
 
    Requester.getIssues(projectUrl).then((value) => {
+      if (value.error) return err(value.error, channel)
 
       let issueEmbed = Embedder.createSingleProject(JSON.parse(value.body), Data.projectData[index], value.headers[value.headers.indexOf('X-Total') + 1]);
 
       channel.send(issueEmbed)
 
    }, (error) => {
-      channel.send(error);
+      return err(`Error: ${error.body}`, channel)
    })
 }
 
@@ -253,10 +219,7 @@ function describeIssue(content: string[], channel: Discord.TextChannel) {
    // getting the project from the channel ID
    let index = projectIDFromChannel(channel.id);
 
-   if (index == -1) {
-      channel.send("invalid channel")
-      return;
-   }
+   if (index == -1) return err("wrong channel", channel);
    // getting the project name and shortname
    let projShortName: string = (Data.projectData)[index].shortname;
    let projName: string = (Data.projectData)[index].name;
@@ -264,34 +227,37 @@ function describeIssue(content: string[], channel: Discord.TextChannel) {
    // getting the id of the issue that was asked for
    // if an invalid id, like a string, was sent, responds as such
    let issue = parseInt(content[3]);
-   if (issue == NaN) {
-      channel.send(`"${content[3]}" is not a valid issue number`)
-      return;
-   }
+   if (issue == NaN) return err("not a valid issue number", channel);
 
    let url = `${config.apiURL}${projShortName}/issues?per_page=100`
 
    Requester.getIssues(url).then((value) => {
+      if (value.error) return err(value.error, channel)
 
       let issueEmbed = Embedder.createSingleIssueFromAllData(JSON.parse(value.body), projName, issue);
 
       channel.send(issueEmbed)
 
    }, (error) => {
-      channel.send(error);
+      return err(`Error: ${error.body}`, channel)
    })
-}
-
-// see describe function comments for details
-function describeAllProjects(content: string[], channel: Discord.TextChannel) {
-   channel.send(Embedder.createAllProjects(Data.projectData))
 }
 
 function help(content: string[], channel: Discord.TextChannel) {
    channel.send(Embedder.createHelp());
 }
 
-function projectIDFromChannel(id) {
+function hi(content: string[], channel: Discord.TextChannel) {
+   channel.send("Hi!");
+}
+
+// for errors
+function err(text, channel) {
+   channel.send(text);
+   return 1;
+}
+
+function projectIDFromChannel(id) : number {
    return Data.projectIDs.indexOf(parseInt(id));
 }
 
