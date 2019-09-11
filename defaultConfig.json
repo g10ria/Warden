@@ -1,0 +1,9 @@
+{
+   "bot_token": "very-very-long-super-secret-token-goes-here",
+   "apiToken": "super-super-secret-api-token-with-high-enough-perms",
+   "embedColor": 8170110,
+   "botUserID": "bot-user-id",
+   "apiURL": "api-url-for-your-server",
+   "standardURL": "normal-url-for-your-server",
+   "issuesPerDescribe": 15
+}
