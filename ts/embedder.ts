@@ -79,7 +79,7 @@ function describeIssueFromData(data, projectName: string, issueNumber: number) {
    const state = data.state;
 
    if (state == "opened") {
-      
+
       var fieldName = "opened";
       if (data.created_at != data.updated_at) fieldName = "updated";
 
@@ -140,7 +140,7 @@ function createHelp() {
             },
             {
                "name": "@Warden describe issues",
-               "value": `Describes the most recent open issues in a project. Lists at most ${config.issuesPerDescribe}.`
+               "value": `Describes the most recent open issues in a project. Lists at most ${config.issuesPerGet}.`
             },
             {
                "name": `@Warden createissue "title: myTitle" ?"description: myDescription" ?"assignee: @pingsomeone"`,

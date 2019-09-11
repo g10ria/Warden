@@ -22,7 +22,7 @@ var rules = new Map();
 client.once('ready', () => {
    rules.set("hi",hi);
    rules.set("help", help);
-   rules.set("describe", describe);
+   rules.set("get", get);
    rules.set("createissue", createIssue);
    rules.set("closeissue", closeIssue);
    rules.set("assign", assignIssue);
@@ -45,6 +45,14 @@ client.on('message', async (message) => {
       err("that command doesn't exist", message.channel)
    }
 });
+
+function hi(content: string[], channel: Discord.TextChannel) {
+   channel.send("Hi!");
+}
+
+function help(content: string[], channel: Discord.TextChannel) {
+   channel.send(Embedder.createHelp());
+}
 
 // assigns or reassigns an issue to someone
 // syntax is @Warden assign issue <number> to <@user>
@@ -169,38 +177,38 @@ function createIssue(content, channel, message) {
 }
 
 /*
-Handles 'describe' functions based on the message's syntax. 
+Handles 'get' functions based on the message's syntax. 
 
-1) @Warden describe issues
-This describes the last 15 open issues (at most 15) of the project.
+1) @Warden get issues
+This gets the last 15 open issues (at most 15) of the project.
 
-2) @Warden describe issue <number>
-This describes the issue with issue ID <number>
+2) @Warden get issue <number>
+This gets the issue with issue ID <number>
 
 Note: Gitlab generally generates issue IDs in increasing but not 
 necessarily sequential numerical order.
 */
-function describe(content: string[], channel: Discord.TextChannel, message: string) {
+function get(content: string[], channel: Discord.TextChannel, message: string) {
 
    if (content.length == 3 && content[2] == "issues") {
-      // describe issues
-      describeIssues(content, channel)
+      // get issues
+      getIssues(content, channel)
 
    } else if (content.length == 4 && content[2] == "issue") {
-      // describe issue <number>
-      describeIssue(content, channel);
+      // get issue <number>
+      getIssue(content, channel);
    }
 }
 
-// see describe function comments for details
-function describeIssues(content: string[], channel: Discord.TextChannel) {
+// see get function comments for details
+function getIssues(content: string[], channel: Discord.TextChannel) {
 
    let index = projectIDFromChannel(channel.id);
    if (index == -1) return err("wrong channel", channel);
    // getting the project name and shortname from csv data
    let projShortName: string = (Data.projectData)[index].shortname;
 
-   let projectUrl = `${config.apiURL}${projShortName}/issues?state=opened&per_page=${config.issuesPerDescribe}`
+   let projectUrl = `${config.apiURL}${projShortName}/issues?state=opened&per_page=${config.issuesPerGet}`
 
    Requester.getIssues(projectUrl).then((value) => {
       if (value.error) return err(value.error, channel)
@@ -215,8 +223,8 @@ function describeIssues(content: string[], channel: Discord.TextChannel) {
    })
 }
 
-// see describe function comments for details
-function describeIssue(content: string[], channel: Discord.TextChannel) {
+// see get function comments for details
+function getIssue(content: string[], channel: Discord.TextChannel) {
 
    // getting the project from the channel ID
    let index = projectIDFromChannel(channel.id);
@@ -231,7 +239,7 @@ function describeIssue(content: string[], channel: Discord.TextChannel) {
    let issue = parseInt(content[3]);
    if (issue == NaN) return err("not a valid issue number", channel);
 
-   let url = `${config.apiURL}${projShortName}/issues?per_page=100`
+   let url = `${config.apiURL}${projShortName}/issues?per_page=300`
 
    Requester.getIssues(url).then((value) => {
       if (value.error) return err(value.error, channel)
@@ -245,13 +253,6 @@ function describeIssue(content: string[], channel: Discord.TextChannel) {
    })
 }
 
-function help(content: string[], channel: Discord.TextChannel) {
-   channel.send(Embedder.createHelp());
-}
-
-function hi(content: string[], channel: Discord.TextChannel) {
-   channel.send("Hi!");
-}
 
 // for errors
 function err(text, channel) {
