@@ -1,7 +1,3 @@
-# WardenBot
-
-WardenBot is a bot for interacting with the Gitlab Issues API from Discord.  
-
 ## To run:
 
 ### Config
