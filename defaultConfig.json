@@ -1,9 +1,10 @@
 {
    "bot_token": "very-very-long-super-secret-token-goes-here",
-   "apiToken": "super-super-secret-api-token-with-high-enough-perms",
-   "embedColor": 8170110,
    "botUserID": "bot-user-id",
+   "apiToken": "super-super-secret-api-token-with-high-enough-perms",
    "apiURL": "api-url-for-gitlab",
    "standardURL": "normal-url-for-gitlab",
+   "embedColor": "hex-color",
+   "botPictureURL": "url-to-some-picture",
    "issuesPerDescribe": 15
 }
