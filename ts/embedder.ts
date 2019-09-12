@@ -21,24 +21,16 @@ function createSingleProject(issueData, projectData) {
    // adding issues to the embed
    for (let key in issueData) {
       if (issueData.hasOwnProperty(key)) {
-
-         embedJSON.embed.fields.push(
-            {
+         embedJSON.embed.fields.push({
                "name": `Issue ${issueData[key].iid}: ${issueData[key].title}`,
                "value": (issueData[key].description == "" || issueData[key].description == undefined) ? "..." : issueData[key].description
-            }
-         )
-
+            })
       }
    }
 
    return embedJSON
 }
 
-// creates a single issue embed from all data for all issues from a project
-// uses the helper createSingleIssueFromOneData (which only takes in data for one issue, not for all issues)
-// includes, title, description, and a link
-// if existing, also includes the issue's creation/updated date, creator, due date, assignee, closed 
 function describeIssueFromAllData(allData, projectName: string, issueNumber: number) {
    var data
    for (let i = 0; i < allData.length; i++) {

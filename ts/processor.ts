@@ -1,5 +1,6 @@
 // processes input for creating an issue
 // input is in the form "name: value"
+// this is like absolutely terrible code
 function processCreateIssue(message : string, data) {
 
     let quotes : number[] = []

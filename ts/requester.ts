@@ -2,8 +2,7 @@ var request = require('request');
 
 import config from './config';
 
-// makes a get request ot the given project url, to get information on all issues from a project
-// returns the issue data, as well as returned headers
+// gets all issues from a projcet, returns response body + headers
 function getIssues(projectUrl: string) {
     const opts = {
         url: projectUrl,
